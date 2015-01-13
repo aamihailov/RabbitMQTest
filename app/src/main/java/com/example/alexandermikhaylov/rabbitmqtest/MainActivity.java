@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.TabHost;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -24,16 +25,18 @@ public class MainActivity extends ListActivity {
     ArrayList<String> mList;
     ArrayAdapter<String> mAdapter;
 
+    TabHost mTabs;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
         bindFields();
         setDefaults();
     }
 
     private void bindFields() {
+        setContentView(R.layout.activity_main);
+
         mHost = (EditText)findViewById(R.id.host);
         mUsername = (EditText)findViewById(R.id.username);
         mPassword= (EditText)findViewById(R.id.password);
@@ -43,6 +46,21 @@ public class MainActivity extends ListActivity {
         mList = new ArrayList<>();
         mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mList);
         setListAdapter(mAdapter);
+
+        mTabs = (TabHost)findViewById(android.R.id.tabhost);
+        mTabs.setup();
+
+        TabHost.TabSpec spec = mTabs.newTabSpec("tag1");
+        spec.setContent(R.id.settingsTab);
+        spec.setIndicator("Settings");
+        mTabs.addTab(spec);
+
+        spec = mTabs.newTabSpec("tag2");
+        spec.setContent(R.id.logTab);
+        spec.setIndicator("Logs");
+        mTabs.addTab(spec);
+
+        mTabs.setCurrentTab(0);
     }
 
     private void setDefaults() {
@@ -86,7 +104,7 @@ public class MainActivity extends ListActivity {
         private MessageConsumer mConsumer;
 
         private void publishText(String val) {
-            mList.add(val);
+            mList.add(0, val);
             mAdapter.notifyDataSetChanged();
         }
 

@@ -10,79 +10,109 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
-        <EditText
+        <TabHost
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="host"
-            android:singleLine="true"
-            android:id="@+id/host" />
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="username"
-            android:singleLine="true"
-            android:id="@+id/username" />
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:ems="10"
-            android:hint="password"
-            android:singleLine="true"
-            android:id="@+id/password" />
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="exchange"
-            android:singleLine="true"
-            android:id="@+id/exchange" />
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textMultiLine"
-            android:ems="10"
-            android:hint="filters"
-            android:id="@+id/filters" />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:id="@android:id/tabhost"
             android:layout_gravity="center_horizontal">
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(re)connect"
-                android:id="@+id/connect"
-                android:layout_gravity="center_horizontal"
-                android:onClick="onReconnectClick" />
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical">
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="clear"
-                android:id="@+id/clear"
-                android:layout_gravity="center_horizontal"
-                android:onClick="onClearClick" />
+                <TabWidget
+                    android:id="@android:id/tabs"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"/>
 
-        </LinearLayout>
+                <FrameLayout
+                    android:id="@android:id/tabcontent"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent">
 
-        <ListView android:id="@android:id/list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+                    <LinearLayout
+                        android:id="@+id/settingsTab"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:orientation="vertical">
+                        <EditText
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="host"
+                            android:singleLine="true"
+                            android:id="@+id/host" />
 
-        <ScrollView
-            android:layout_width="fill_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/scrollView"
-            android:layout_gravity="center_horizontal">
+                        <EditText
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="username"
+                            android:singleLine="true"
+                            android:id="@+id/username" />
 
-        </ScrollView>
+                        <EditText
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:ems="10"
+                            android:hint="password"
+                            android:singleLine="true"
+                            android:id="@+id/password" />
 
+                        <EditText
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="exchange"
+                            android:singleLine="true"
+                            android:id="@+id/exchange" />
+
+                        <EditText
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textMultiLine"
+                            android:ems="10"
+                            android:hint="filters"
+                            android:id="@+id/filters" />
+
+                        <LinearLayout
+                            android:orientation="horizontal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal">
+
+                            <Button
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="(re)connect"
+                                android:id="@+id/connect"
+                                android:layout_gravity="center_horizontal"
+                                android:onClick="onReconnectClick" />
+
+                            <Button
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="clear log"
+                                android:id="@+id/clear"
+                                android:layout_gravity="center_horizontal"
+                                android:onClick="onClearClick" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/logTab"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:orientation="vertical">
+
+                        <ListView android:id="@android:id/list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </FrameLayout>
+            </LinearLayout>
+        </TabHost>
     </LinearLayout>
 </RelativeLayout>
