@@ -11,8 +11,8 @@ import java.io.*;
  */
 public class MessageConsumer extends IConnectToRabbitMQ {
 
-    public MessageConsumer(String server, String exchange, String exchangeType) {
-        super(server, exchange, exchangeType);
+    public MessageConsumer(String server, String exchange) {
+        super(server, exchange, "topic");
     }
 
     //The Queue name for this consumer
@@ -40,18 +40,11 @@ public class MessageConsumer extends IConnectToRabbitMQ {
     };
 
     private Handler mMessageHandler = new Handler();
-    private Handler mConsumeHandler = new Handler();
 
     // Create runnable for posting back to main thread
     final Runnable mReturnMessage = new Runnable() {
         public void run() {
             mOnReceiveMessageHandler.onReceiveMessage(mLastMessage);
-        }
-    };
-
-    final Runnable mConsumeRunner = new Runnable() {
-        public void run() {
-            Consume();
         }
     };
 
@@ -63,7 +56,6 @@ public class MessageConsumer extends IConnectToRabbitMQ {
     {
         if(super.connectToRabbitMQ())
         {
-
             try {
                 mQueue = mModel.queueDeclare().getQueue();
                 MySubscription = new QueueingConsumer(mModel);
@@ -74,11 +66,7 @@ public class MessageConsumer extends IConnectToRabbitMQ {
             }
             if (MyExchangeType == "fanout")
                 AddBinding("");//fanout has default binding
-
-            Running = true;
-            mConsumeHandler.post(mConsumeRunner);
-
-            return true;
+            Consume();
         }
         return false;
     }
@@ -92,52 +80,26 @@ public class MessageConsumer extends IConnectToRabbitMQ {
         try {
             mModel.queueBind(mQueue, mExchange, routingKey);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Remove binding between this consumers Queue and the Exchange with routingKey
-     * @param routingKey the binding key eg GOOG
-     */
-    public void RemoveBinding(String routingKey)
-    {
-        try {
-            mModel.queueUnbind(mQueue, mExchange, routingKey);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     private void Consume()
     {
-        Thread thread = new Thread()
-        {
-            @Override
-            public void run() {
-                while(Running){
-                    QueueingConsumer.Delivery delivery;
-                    try {
-                        delivery = MySubscription.nextDelivery();
-                        mLastMessage = delivery.getBody();
-                        mMessageHandler.post(mReturnMessage);
-                        try {
-                            mModel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } catch (InterruptedException ie) {
-                        ie.printStackTrace();
-                    }
+        while(true) {
+            QueueingConsumer.Delivery delivery;
+            try {
+                delivery = MySubscription.nextDelivery();
+                mLastMessage = delivery.getBody();
+                mMessageHandler.post(mReturnMessage);
+                try {
+                    mModel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
             }
-        };
-        thread.start();
-    }
-
-    public void dispose(){
-        Running = false;
+        }
     }
 }
