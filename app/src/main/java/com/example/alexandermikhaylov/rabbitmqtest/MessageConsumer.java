@@ -26,7 +26,7 @@ public class MessageConsumer extends IConnectToRabbitMQ {
 
     // An interface to be implemented by an object that is interested in messages(listener)
     public interface OnReceiveMessageHandler{
-        public void onReceiveMessage(byte[] message);
+        public void onReceiveMessage(QueueingConsumer.Delivery delivery);
     }
 
     //A reference to the listener, we can only have one at a time(for now)
@@ -92,8 +92,7 @@ public class MessageConsumer extends IConnectToRabbitMQ {
             QueueingConsumer.Delivery delivery;
             try {
                 delivery = MySubscription.nextDelivery();
-                mLastMessage = delivery.getBody();
-                mOnReceiveMessageHandler.onReceiveMessage(mLastMessage);
+                mOnReceiveMessageHandler.onReceiveMessage(delivery);
                 try {
                     mModel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
                 } catch (IOException e) {

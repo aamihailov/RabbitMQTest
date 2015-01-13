@@ -8,6 +8,8 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.TabHost;
 
+import com.rabbitmq.client.QueueingConsumer;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,15 +126,18 @@ public class MainActivity extends ListActivity {
             }
 
             mConsumer.setOnReceiveMessageHandler(new MessageConsumer.OnReceiveMessageHandler(){
-                public void onReceiveMessage(byte[] message) {
+                public void onReceiveMessage(QueueingConsumer.Delivery delivery) {
                     String text = "";
                     try {
-                        text = new String(message, "UTF8");
+                        text = new String(delivery.getBody(), "UTF8");
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
 
-                    publishProgress(text);
+                    publishProgress(delivery.getEnvelope().getExchange()
+                            + ' ' + delivery.getEnvelope().getDeliveryTag()
+                            + ' ' + delivery.getEnvelope().getRoutingKey()
+                            + ' ' + text);
                 }
             });
 
