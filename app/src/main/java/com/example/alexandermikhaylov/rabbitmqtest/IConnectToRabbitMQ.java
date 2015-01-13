@@ -5,7 +5,6 @@ import android.os.Looper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import java.io.*;
 
 /**
  * Base class for objects that connect to a RabbitMQ Broker
@@ -16,8 +15,6 @@ public abstract class IConnectToRabbitMQ {
 
     protected Channel mModel = null;
     protected Connection  mConnection;
-
-    protected boolean Running ;
 
     protected  String MyExchangeType ;
 
@@ -36,27 +33,11 @@ public abstract class IConnectToRabbitMQ {
         Looper.prepare();
     }
 
-    public void Dispose()
-    {
-        Running = false;
-
-        try {
-            if (mConnection!=null)
-                mConnection.close();
-            if (mModel != null)
-                mModel.abort();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-    }
-
     /**
      * Connect to the broker and create the exchange
      * @return success
      */
-    public boolean connectToRabbitMQ()
+    public boolean connectToRabbitMQ(String username, String password)
     {
         if(mModel!= null && mModel.isOpen() )//already declared
             return true;
@@ -64,6 +45,8 @@ public abstract class IConnectToRabbitMQ {
         {
             ConnectionFactory connectionFactory = new ConnectionFactory();
             connectionFactory.setHost(mServer);
+            connectionFactory.setUsername(username);
+            connectionFactory.setPassword(password);
             mConnection = connectionFactory.newConnection();
             mModel = mConnection.createChannel();
             mModel.exchangeDeclare(mExchange, MyExchangeType, true);

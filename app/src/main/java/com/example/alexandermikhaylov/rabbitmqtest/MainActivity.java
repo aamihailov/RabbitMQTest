@@ -4,21 +4,53 @@ import android.app.ListActivity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends ListActivity {
     MessageConsumerTask mTask;
 
+    EditText mHost;
+    EditText mUsername;
+    EditText mPassword;
+    EditText mExchange;
+    EditText mFilters;
+
+    ArrayList<String> mList;
+    ArrayAdapter<String> mAdapter;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        bindFields();
+        setDefaults();
+    }
+
+    private void bindFields() {
+        mHost = (EditText)findViewById(R.id.host);
+        mUsername = (EditText)findViewById(R.id.username);
+        mPassword= (EditText)findViewById(R.id.password);
+        mExchange = (EditText)findViewById(R.id.exchange);
+        mFilters = (EditText)findViewById(R.id.filters);
+
+        mList = new ArrayList<>();
+        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mList);
+        setListAdapter(mAdapter);
+    }
+
+    private void setDefaults() {
+        mHost.setText("geohero.ru");
+        mUsername.setText("nskdvlp");
+        mPassword.setText("12345678");
+        mExchange.setText("snmp_int_notif");
+        mFilters.setText("#.error\n#.critical");
     }
 
     @Override
@@ -34,57 +66,73 @@ public class MainActivity extends ListActivity {
     }
 
     public void onReconnectClick(View v) {
-        EditText host = (EditText)findViewById(R.id.host);
-        EditText exchange = (EditText)findViewById(R.id.exchange);
-        EditText filters = (EditText)findViewById(R.id.filters);
-
-        List<String> params = new ArrayList<String>();
-        params.add(host.getText().toString());
-        params.add(exchange.getText().toString());
-        for (String o : filters.getText().toString().split("\n")) {
-            params.add(o);
-        }
+        List<String> params = new ArrayList<>();
+        params.add(mHost.getText().toString());
+        params.add(mUsername.getText().toString());
+        params.add(mPassword.getText().toString());
+        params.add(mExchange.getText().toString());
+        params.addAll(Arrays.asList(mFilters.getText().toString().split("\n")));
 
         mTask = new MessageConsumerTask();
         mTask.execute(params.toArray(new String[params.size()]));
     }
 
+    public void onClearClick(View v) {
+        mList.clear();
+        mAdapter.notifyDataSetChanged();
+    }
+
     class MessageConsumerTask extends AsyncTask<String, String, Void> {
         private MessageConsumer mConsumer;
+
+        private void publishText(String val) {
+            mList.add(val);
+            mAdapter.notifyDataSetChanged();
+        }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            publishText("Trying connect");
         }
 
         @Override
         protected Void doInBackground(String... params) {
-            mConsumer = new MessageConsumer(params[0], params[1]);
-            mConsumer.connectToRabbitMQ();
+            mConsumer = new MessageConsumer(params[0], params[3]);
 
-            for (int i = 2; i < params.length; i++) {
-                mConsumer.AddBinding(params[i]);
+            mConsumer.dropBinding();
+            for (int i = 4; i < params.length; i++) {
+                mConsumer.setBinding(params[i]);
             }
 
             mConsumer.setOnReceiveMessageHandler(new MessageConsumer.OnReceiveMessageHandler(){
                 public void onReceiveMessage(byte[] message) {
-                String text = "";
-                try {
-                    text = new String(message, "UTF8");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+                    String text = "";
+                    try {
+                        text = new String(message, "UTF8");
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
 
-                publishProgress(text);
+                    publishProgress(text);
                 }
             });
+
+            mConsumer.connectToRabbitMQ(params[1], params[2]);
 
             return null;
         }
 
         @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+            publishText(values[0]);
+        }
+
+        @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
+            publishText("Connection ended");
         }
     }
 }

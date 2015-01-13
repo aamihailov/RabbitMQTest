@@ -1,9 +1,9 @@
 package com.example.alexandermikhaylov.rabbitmqtest;
 
-import android.os.Handler;
-
 import com.rabbitmq.client.QueueingConsumer;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *Consumes messages from a RabbitMQ broker
@@ -13,6 +13,8 @@ public class MessageConsumer extends IConnectToRabbitMQ {
 
     public MessageConsumer(String server, String exchange) {
         super(server, exchange, "topic");
+
+        mBindingKeys = new ArrayList<>();
     }
 
     //The Queue name for this consumer
@@ -25,7 +27,7 @@ public class MessageConsumer extends IConnectToRabbitMQ {
     // An interface to be implemented by an object that is interested in messages(listener)
     public interface OnReceiveMessageHandler{
         public void onReceiveMessage(byte[] message);
-    };
+    }
 
     //A reference to the listener, we can only have one at a time(for now)
     private OnReceiveMessageHandler mOnReceiveMessageHandler;
@@ -37,24 +39,15 @@ public class MessageConsumer extends IConnectToRabbitMQ {
      */
     public void setOnReceiveMessageHandler(OnReceiveMessageHandler handler){
         mOnReceiveMessageHandler = handler;
-    };
-
-    private Handler mMessageHandler = new Handler();
-
-    // Create runnable for posting back to main thread
-    final Runnable mReturnMessage = new Runnable() {
-        public void run() {
-            mOnReceiveMessageHandler.onReceiveMessage(mLastMessage);
-        }
-    };
+    }
 
     /**
      * Create Exchange and then start consuming. A binding needs to be added before any messages will be delivered
      */
     @Override
-    public boolean connectToRabbitMQ()
+    public boolean connectToRabbitMQ(String username, String password)
     {
-        if(super.connectToRabbitMQ())
+        if(super.connectToRabbitMQ(username, password))
         {
             try {
                 mQueue = mModel.queueDeclare().getQueue();
@@ -64,21 +57,30 @@ public class MessageConsumer extends IConnectToRabbitMQ {
                 e.printStackTrace();
                 return false;
             }
-            if (MyExchangeType == "fanout")
-                AddBinding("");//fanout has default binding
+            AddBinding();
             Consume();
         }
         return false;
     }
 
-    /**
-     * Add a binding between this consumers Queue and the Exchange with routingKey
-     * @param routingKey the binding key eg GOOG
-     */
-    public void AddBinding(String routingKey)
+    private List<String> mBindingKeys;
+
+    public void dropBinding()
+    {
+        mBindingKeys.clear();
+    }
+
+    public void setBinding(String routingKey)
+    {
+        mBindingKeys.add(routingKey);
+    }
+
+    private void AddBinding()
     {
         try {
-            mModel.queueBind(mQueue, mExchange, routingKey);
+            for (String key : mBindingKeys) {
+                mModel.queueBind(mQueue, mExchange, key);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,7 +93,7 @@ public class MessageConsumer extends IConnectToRabbitMQ {
             try {
                 delivery = MySubscription.nextDelivery();
                 mLastMessage = delivery.getBody();
-                mMessageHandler.post(mReturnMessage);
+                mOnReceiveMessageHandler.onReceiveMessage(mLastMessage);
                 try {
                     mModel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
                 } catch (IOException e) {
