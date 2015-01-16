@@ -49,7 +49,6 @@ public abstract class IConnectToRabbitMQ {
             connectionFactory.setPassword(password);
             mConnection = connectionFactory.newConnection();
             mModel = mConnection.createChannel();
-            mModel.exchangeDeclare(mExchange, MyExchangeType, true);
 
             return true;
         }

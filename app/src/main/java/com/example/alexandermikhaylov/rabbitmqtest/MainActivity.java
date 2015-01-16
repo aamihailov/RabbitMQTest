@@ -11,8 +11,10 @@ import android.widget.TabHost;
 import com.rabbitmq.client.QueueingConsumer;
 
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends ListActivity {
@@ -24,8 +26,8 @@ public class MainActivity extends ListActivity {
     EditText mExchange;
     EditText mFilters;
 
-    ArrayList<String> mList;
-    ArrayAdapter<String> mAdapter;
+    ArrayList<StringPair> mList;
+    MyAdapter mAdapter;
 
     TabHost mTabs;
 
@@ -46,7 +48,7 @@ public class MainActivity extends ListActivity {
         mFilters = (EditText)findViewById(R.id.filters);
 
         mList = new ArrayList<>();
-        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, mList);
+        mAdapter = new MyAdapter(this, mList);
         setListAdapter(mAdapter);
 
         mTabs = (TabHost)findViewById(android.R.id.tabhost);
@@ -66,11 +68,11 @@ public class MainActivity extends ListActivity {
     }
 
     private void setDefaults() {
-        mHost.setText("geohero.ru");
+        mHost.setText("home.geohero.ru");
         mUsername.setText("nskdvlp");
         mPassword.setText("12345678");
         mExchange.setText("snmp_int_notif");
-        mFilters.setText("#.error\n#.critical");
+        mFilters.setText("#.error\n#.warning\n#.normal");
     }
 
     @Override
@@ -93,8 +95,10 @@ public class MainActivity extends ListActivity {
         params.add(mExchange.getText().toString());
         params.addAll(Arrays.asList(mFilters.getText().toString().split("\n")));
 
-        mTask = new MessageConsumerTask();
-        mTask.execute(params.toArray(new String[params.size()]));
+        if (mTask == null) {
+            mTask = new MessageConsumerTask();
+            mTask.execute(params.toArray(new String[params.size()]));
+        }
     }
 
     public void onClearClick(View v) {
@@ -105,15 +109,18 @@ public class MainActivity extends ListActivity {
     class MessageConsumerTask extends AsyncTask<String, String, Void> {
         private MessageConsumer mConsumer;
 
-        private void publishText(String val) {
-            mList.add(0, val);
+        private void publishText(String val1, String val2) {
+            StringPair el = new StringPair();
+            el.setItem(val1);
+            el.setSubItem(val2);
+            mList.add(0, el);
             mAdapter.notifyDataSetChanged();
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            publishText("Trying connect");
+            publishText("Connecting...", "");
         }
 
         @Override
@@ -134,10 +141,7 @@ public class MainActivity extends ListActivity {
                         e.printStackTrace();
                     }
 
-                    publishProgress(delivery.getEnvelope().getExchange()
-                            + ' ' + delivery.getEnvelope().getDeliveryTag()
-                            + ' ' + delivery.getEnvelope().getRoutingKey()
-                            + ' ' + text);
+                    publishProgress(delivery.getEnvelope().getRoutingKey(), text);
                 }
             });
 
@@ -149,13 +153,16 @@ public class MainActivity extends ListActivity {
         @Override
         protected void onProgressUpdate(String... values) {
             super.onProgressUpdate(values);
-            publishText(values[0]);
+            Calendar cal = Calendar.getInstance();
+            cal.getTime();
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - ");
+            publishText(sdf.format(cal.getTime()).concat(values[0]), values[1]);
         }
 
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            publishText("Connection ended");
+            publishText("Connection ended", "");
         }
     }
 }
